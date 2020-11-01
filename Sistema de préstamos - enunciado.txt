@@ -1,0 +1,45 @@
+Sistema de préstamos
+
+La empresa “Prestamos Cayetano” necesita un sistema capaz de manejar la información de sus clientes. 
+La información que se mantiene sobre los mismos es: 
+    el número de documento del cliente, que es único e identifica de forma unívoca toda la información asociada al mismo;
+    nombre del beneficiario;
+    su número de teléfono;
+    el tipo de préstamo otorgado;
+    el monto del mismo;
+    la tasa anual de interés 
+    y la fecha en que se adjudicó el préstamo. 
+    
+La empresa necesita poder 
+    realizar consultas sobre un beneficiario dado,
+    ingresar la información de nuevos clientes 
+    y eliminar los datos de aquellos que se desvinculen de la empresa.
+
+La solución deberá presentar un menú principal que permita elegir la estructura sobre la cual se desea trabajar. 
+Una vez seleccionada la estructura utilizada, se deberá presentar un menú que permita las siguientes operaciones: 
+    ingreso de nuevos clientes, 
+    eliminar beneficiarios existentes, 
+    determinar si una persona tiene un préstamo adjudicado 
+    y consultar la información completa de un cliente.
+ 
+La información puede estar almacenada en el archivo de texto “ClientesPrestamos.txt”, que tiene el siguiente formato:
+
+24831421                                /*documento primer cliente*/
+CUENTA SUELDO                           /*tipo de pr´estamo adquirido primer cliente*/
+56                                      /*tasa de inter´es anual primer cliente*/
+Mariano Fazio Fern´andez                /*nombre primer cliente*/
+261-4967890                             /*tel´efono primer cliente*/
+150000.00                               /*monto del pr´estamo primer cliente*/
+2019-02-13                              /*fecha otorgamiento del beneficio primer cliente*/
+
+. . .
+. . .
+
+24919842                                /*documento i-esimo cliente*/
+U.V.A                                   /*tipo de pr´estamo adquirido i-esimo cliente*/
+9                                       /*tasa de inter´es anual i-esimo cliente*/
+Jacobo Feldman                          /*nombre i-esimo cliente*/
+266-4967825                             /*tel´efono i-esimo cliente*/
+. . .
+1 25000.00                              /*monto del pr´estamo i-esimo cliente*/
+2018-12-13                              /*fecha otorgamiento del beneficio i-esimo cliente*/
