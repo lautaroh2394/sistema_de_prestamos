@@ -23,19 +23,22 @@ class ClientData extends ChangeNotifier{
     notifyListeners();
     print("remove by index");
     print(data);
+    updateFile();
   }
 
   void removeByDoc(String doc){
     var it = find(doc);
-    data.remove(it);
+    var itemFound = (it != null && it.length > 0) ? it[0] : null;
+    data.remove(itemFound);
     notifyListeners();
     print("remove by doc");
     print(data);
+    updateFile();
   }
 
-  bool add(nroDoc, nombre, telefono, tipoPrestamo, monto, interes, fecha){
+  Future<bool> add(nroDoc, nombre, telefono, tipoPrestamo, monto, interes, fecha) async{
     //Es valido?
-    if (!(nroDoc.length >= 6 &&
+    /*if (!(nroDoc.length >= 6 &&
         nombre.length > 0 &&
         telefono.length > 6 && telefono.split("").every((element) =>reg.hasMatch(element)) &&
         tipoPrestamo != "" &&
@@ -45,6 +48,7 @@ class ClientData extends ChangeNotifier{
         find(nroDoc).length == 0)){
           return false;
         }
+    */
     
     data.add({
       "nroDoc" : nroDoc,
@@ -57,7 +61,7 @@ class ClientData extends ChangeNotifier{
     });
 
     notifyListeners();
-    updateFile();
+    await updateFile();
     return true;
   }
 
@@ -70,7 +74,7 @@ class ClientData extends ChangeNotifier{
   }
 
   void updateFile() async{
-    String content = json.encode(data);
+    String content = json.encode( data);
     File f = File("$_path");
     await f.create();
     await f.writeAsString(content);
@@ -100,6 +104,7 @@ class ClientData extends ChangeNotifier{
       f = await showOpenPanel();
       print("showopenpanel ${f.canceled}");
     }
+    _path = f.paths[0];
     File file = File('${f.paths[0]}');
     String jsonstring = await file.readAsString();
     data = json.decode(jsonstring);

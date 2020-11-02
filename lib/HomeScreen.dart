@@ -15,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String btnPressed = "";
   TextEditingController userInputController = TextEditingController(text: "",);
+  String filter = "";
   List _results = null;
 
   void showBlock(String bloque){
@@ -24,8 +25,27 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void setConsulta(){
+    userInputController.text = "";
+    nroDocController.text = "";
+    nombreController.text = "";
+    telefonoController.text = "";
+    tipoPrestamoController.text = "";
+    montoController.text = "";
+    fechaController.text = "";
+    interesController.text = "";
+    showBlock("consultar");
+  }
+
   void dispose() {
     userInputController.dispose();
+    nroDocController.dispose();
+    nombreController.dispose();
+    telefonoController.dispose();
+    tipoPrestamoController.dispose();
+    montoController.dispose();
+    fechaController.dispose();
+    interesController.dispose();
     super.dispose();
   }
 
@@ -116,13 +136,29 @@ class _HomeScreenState extends State<HomeScreen> {
             itemBuilder: (context, index){
               print("buld listveiw");
               if (_results != null){
-                return showFormulario(context, (){
-                  ClientData.getInstance().removeByDoc(_results[index]["nroDoc"]);
-                }, (_results != null  ? _results : ClientData.getInstance().data)[index],);
+                return showFormulario(
+                  context,
+                  (){
+                    //Lo correcto sería esperar a un Future para evitar posibles problemas con la actualizacion del archivo
+                    ClientData.getInstance().removeByDoc(_results[index]["nroDoc"]);
+                    //Actualizo la lista. Lo correcto sería usar provider.
+                    var r = ClientData.getInstance().find(filter);
+                    setState(() {
+                      _results = r;
+                    });
+                    },
+                  (_results != null  ? _results : ClientData.getInstance().data)[index],
+                );
               }
               else{
                 return showFormulario(context, (){
+                  //Lo correcto sería esperar a un Future para evitar posibles problemas con la actualizacion del archivo
                   ClientData.getInstance().removeByIndex(index);
+                  //Actualizo la lista. Lo correcto sería usar provider.
+                  var r = ClientData.getInstance().find(filter);
+                  setState(() {
+                    _results = r;
+                  });
                 },
                 (_results != null ? _results : ClientData.getInstance().data)[index],);
               }
@@ -148,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onChanged: (value) {
               setState(() {
                 _results = ClientData.getInstance().find(value);
+                filter = value;
               });
             }
           ),
@@ -156,7 +193,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  TextEditingController nroDocController = TextEditingController();
+  TextEditingController nombreController = TextEditingController();
+  TextEditingController telefonoController = TextEditingController();
+  TextEditingController tipoPrestamoController = TextEditingController();
+  TextEditingController interesController = TextEditingController();
+  TextEditingController montoController = TextEditingController();
+  TextEditingController fechaController = TextEditingController();
 
+  Widget inputForm(TextEditingController tec, String label){
+    return Expanded(
+      flex: 1,
+      child:TextField(
+        controller: tec,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: label,
+        ),
+      ),
+    );
+  }
   Widget formulario(context){
     return Visibility(
       visible: (btnPressed == "nuevo"),
@@ -165,24 +221,76 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(color: Colors.green[100]),
         child: Column(
           children:[
-            /*Row(
-              children: [*/
-                TextField(),
-                TextField(),
-                TextField(),
-                TextField(),
+            Row(
+              children: [
+                inputForm(nroDocController, "Ingrese nro de documento"),
+                inputForm(nombreController, "Ingrese nombre y apellido"),
+                inputForm(telefonoController,"Ingrese nro de teléfono"),
+                inputForm(tipoPrestamoController, "Ingrese tipo de prestamo"),
               ],
             ),
-            /*Row(
+            Row(
               children: [
-                TextField(),
-                TextField(),
-                TextField(),
-                TextField(),
+                inputForm(montoController,"Ingrese monto"),
+                inputForm(interesController,"Ingrese tasa"),
+                inputForm(fechaController,"Ingrese fecha"),
+                Expanded(
+                  flex: 1,
+                  child: ElevatedButton(
+                    child: Text("Guardar"),
+                    onPressed: () async {
+                      await ClientData.getInstance().add(
+                          nroDocController.text,
+                          nombreController.text,
+                          telefonoController.text,
+                          tipoPrestamoController.text,
+                          montoController.text,
+                          interesController.text,
+                          fechaController.text
+                      );
+                      setConsulta();
+                      print(ClientData.getInstance().data);
+                    },
+                  ),
+                )
               ],
             )
           ]
-        )*/
+        )
+      )
+    );
+  }
+
+  Widget clienteForm(title, value){
+    return Expanded(
+      child: Column(
+        children:[
+         Container(
+            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            child: Row(
+              children:[
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    alignment: Alignment.centerLeft,
+                    child:Text(title),
+                  ),
+                ),
+                Expanded(
+                    flex: 4,
+                    child:Container(
+                      margin: EdgeInsets.symmetric(horizontal:5),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(value)
+                    )
+                ),
+              ]
+            )
+          )
+        ]
       )
     );
   }
@@ -193,30 +301,45 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         decoration: BoxDecoration(color: Colors.green[100]),
-        child: Column(
-          children:[
-            Row(
-              children:[
-                Text(cliente["nroDoc"]),
-                Text("show form"),
-                Text("show form"),
-                Text("show form"),
-              ]
-            ),
-            Row(
-              children:[
-                Text("show form"),
-                Text("show form"),
-                Text("show form"),
-                Visibility(
-                  visible: btnPressed == "eliminar",
-                  child: ElevatedButton(
-                    child: Text("Borrar"),
-                    onPressed: onDeleteCallback,
-                  )
+        child: Row(
+          children: [
+            Expanded(
+              flex: 9,
+              child: Column(
+                    children:[
+                      Row(
+                          children:[
+                            clienteForm("DOC:",cliente["nroDoc"]),
+                            clienteForm("NOM:",cliente["nombre"]),
+                            clienteForm("TEL:",cliente["telefono"]),
+                            clienteForm("TIPO:",cliente["tipoPrestamo"]),
+                          ]
+                      ),
+                      Row(
+                          children:[
+                            clienteForm("MONTO:",cliente["monto"]),
+                            clienteForm("TASA", cliente["interes"]),
+                            clienteForm("FECHA", cliente["fecha"]),
+                            clienteForm("",""),
+                          ]
+                      ),
+                    ]
                 )
-              ]
             ),
+            Column(
+              children: [
+                Visibility(
+                    visible: btnPressed == "eliminar",
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 5),
+                      child: ElevatedButton(
+                        child: Text("Borrar"),
+                        onPressed: onDeleteCallback,
+                      )
+                    )
+                )
+              ],
+            )
           ]
         )
       )
