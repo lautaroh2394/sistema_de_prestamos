@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'ClientData.dart';
+import 'dart:collection';
 
 class HomeScreen extends StatefulWidget {
   static String route = "/HomeScreen";
@@ -13,10 +14,63 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  @override
+  void initState(){
+    initControllers();
+    super.initState();
+  }
   String btnPressed = "";
   TextEditingController userInputController = TextEditingController(text: "",);
   String filter = "";
   List _results = null;
+  bool _valid = false;
+  final regNro = new RegExp(r"^([0-9]|\+){6,8}$");
+  final regLetras = new RegExp(r"^[a-zA-Z\ áéíóúÁÉÍÓÚñ]*$");
+  final regTel = new RegExp(r"^[0-9]*$");
+  final regMonto = new RegExp(r"^[0-9]*(\.)?[0-9]*$");
+  final regFecha = new RegExp(r"^[0-9]{2}/[0-9]{2}/[0-9]{2}$");
+  Map<String,dynamic> controllers;
+
+  void initControllers(){
+    controllers = {
+      "nroDoc":{
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regNro.hasMatch(value),
+      },
+      "nombre" : {
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regLetras.hasMatch(value),
+      },
+      "telefono" : {
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regTel.hasMatch(value),
+      },
+      "tipoPrestamo" : {
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regLetras.hasMatch(value),
+      },
+      "monto" : {
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regMonto.hasMatch(value),
+      },
+      "interes" : {
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regMonto.hasMatch(value),
+      },
+      "fecha" : {
+        "controller":TextEditingController(),
+        "color": Colors.teal,
+        "isValid" : (String value) => regFecha.hasMatch(value),
+      }
+    };
+  }
 
   void showBlock(String bloque){
     setState(() {
@@ -26,27 +80,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void setConsulta(){
-    userInputController.text = "";
-    nroDocController.text = "";
-    nombreController.text = "";
-    telefonoController.text = "";
-    tipoPrestamoController.text = "";
-    montoController.text = "";
-    fechaController.text = "";
-    interesController.text = "";
+    controllers.forEach((key, value) {value["controller"].text = "";});
+    setState(()=>{
+    _valid = false
+    });
     showBlock("consultar");
   }
 
   void dispose() {
-    userInputController.dispose();
-    nroDocController.dispose();
-    nombreController.dispose();
-    telefonoController.dispose();
-    tipoPrestamoController.dispose();
-    montoController.dispose();
-    fechaController.dispose();
-    interesController.dispose();
+    controllers.forEach((key, value) {value["controller"].dispose();});
     super.dispose();
+  }
+  
+  void updateValid(){
+    bool v = false;
+    if (controllers.entries.map((entry) {
+      return entry.value["isValid"](entry.value["controller"].text);
+    }).every((v) => v)){
+      v = true;
+    }
+    setState(()=>{
+      _valid = v
+    });
   }
 
   @override
@@ -193,26 +248,39 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  TextEditingController nroDocController = TextEditingController();
-  TextEditingController nombreController = TextEditingController();
-  TextEditingController telefonoController = TextEditingController();
-  TextEditingController tipoPrestamoController = TextEditingController();
-  TextEditingController interesController = TextEditingController();
-  TextEditingController montoController = TextEditingController();
-  TextEditingController fechaController = TextEditingController();
-
-  Widget inputForm(TextEditingController tec, String label){
+  Widget inputForm(String key, String label, {String helper : null}){
     return Expanded(
       flex: 1,
       child:TextField(
-        controller: tec,
+        controller: controllers[key]["controller"],
         decoration: InputDecoration(
           border: OutlineInputBorder(),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: controllers[key]["color"],
+            ),
+          ),
           labelText: label,
+          helperText: helper,
         ),
+        onChanged: (String v){
+          Color c = null;
+          if (controllers[key]["isValid"](v)){
+            c = Colors.green;
+          }
+          else{
+            c = Colors.red;
+          }
+          setState(()=>{
+            controllers[key]["color"] = c
+          });
+          print(controllers);
+          updateValid();
+        },
       ),
     );
   }
+
   Widget formulario(context){
     return Visibility(
       visible: (btnPressed == "nuevo"),
@@ -223,36 +291,18 @@ class _HomeScreenState extends State<HomeScreen> {
           children:[
             Row(
               children: [
-                inputForm(nroDocController, "Ingrese nro de documento"),
-                inputForm(nombreController, "Ingrese nombre y apellido"),
-                inputForm(telefonoController,"Ingrese nro de teléfono"),
-                inputForm(tipoPrestamoController, "Ingrese tipo de prestamo"),
+                inputForm("nroDoc", "Ingrese nro de documento"),
+                inputForm("nombre", "Ingrese nombre y apellido"),
+                inputForm("telefono","Ingrese nro de teléfono"),
+                inputForm("tipoPrestamo", "Ingrese tipo de prestamo"),
               ],
             ),
             Row(
               children: [
-                inputForm(montoController,"Ingrese monto"),
-                inputForm(interesController,"Ingrese tasa"),
-                inputForm(fechaController,"Ingrese fecha"),
-                Expanded(
-                  flex: 1,
-                  child: ElevatedButton(
-                    child: Text("Guardar"),
-                    onPressed: () async {
-                      await ClientData.getInstance().add(
-                          nroDocController.text,
-                          nombreController.text,
-                          telefonoController.text,
-                          tipoPrestamoController.text,
-                          montoController.text,
-                          interesController.text,
-                          fechaController.text
-                      );
-                      setConsulta();
-                      print(ClientData.getInstance().data);
-                    },
-                  ),
-                )
+                inputForm("monto","Ingrese monto"),
+                inputForm("interes","Ingrese tasa"),
+                inputForm("fecha","Ingrese fecha (DD/MM/AA)"),
+                guardarButton(),
               ],
             )
           ]
@@ -343,6 +393,28 @@ class _HomeScreenState extends State<HomeScreen> {
           ]
         )
       )
+    );
+  }
+
+  Widget guardarButton(){
+    return Expanded(
+      flex: 1,
+      child: ElevatedButton(
+        child: Text("Guardar"),
+        onPressed: _valid ? () async {
+          await (ClientData.getInstance()).add(
+            controllers["nroDoc"]["controller"].text,
+            controllers["nombre"]["controller"].text,
+            controllers["telefono"]["controller"].text,
+            controllers["tipoPrestamo"]["controller"].text,
+            controllers["monto"]["controller"].text,
+            controllers["interes"]["controller"].text,
+            controllers["fecha"]["controller"].text,
+          );
+          setConsulta();
+          print(ClientData.getInstance().data);
+        } : null,
+      ),
     );
   }
 }
